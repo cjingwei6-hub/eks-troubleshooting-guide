@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Amazon EKS 官方实战工作坊 (EKS Workshop) 权威全景中文指南</title>
+  <meta name="description" content="Amazon EKS 官方工作坊 (www.eksworkshop.com) 全模块精品中文翻译与架构精解，涵盖计算、网络、安全、可观测性、GitOps、AI/ML 与全景排障。">
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            aws: {
+              orange: '#FF9900',
+              navy: '#232F3E',
+              blue: '#0073BB',
+              dark: '#0F172A',
+              card: '#1E293B',
+              border: '#334155'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    pre code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+    /* 自定义滚动条 */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #ff9900;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans selection:bg-amber-500 selection:text-slate-950 flex flex-col">
+
+  <!-- 顶部状态与全局导航 -->
+  <header class="sticky top-0 z-50 backdrop-blur-xl bg-slate-950/90 border-b border-slate-800 h-16 flex items-center px-4 lg:px-8 justify-between">
+    <div class="flex items-center space-x-3">
+      <button onclick="toggleSidebar()" class="lg:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
+        <i class="fa-solid fa-bars text-lg"></i>
+      </button>
+      <div class="w-9 h-9 rounded-lg bg-gradient-to-tr from-amber-500 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
+        <i class="fa-brands fa-aws text-slate-950 font-black text-xl"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="font-bold text-base tracking-tight text-white">Amazon EKS Workshop</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 font-medium">官方中文全景版</span>
+        </div>
+        <p class="text-[11px] text-slate-400 hidden sm:block">权威同步 eksworkshop.com · 架构精解 · 生产级落地手册</p>
+      </div>
+    </div>
+
+    <!-- 搜索栏与功能按钮 -->
+    <div class="flex items-center space-x-3">
+      <div class="relative w-48 sm:w-64 md:w-80">
+        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-slate-400"></i>
+        <input type="text" id="searchInput" oninput="filterContent()" placeholder="快速搜索模块/命令/概念 (如 Karpenter, IRSA, 503)..."
+          class="w-full bg-slate-900 border border-slate-800 text-xs rounded-lg pl-9 pr-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all">
+      </div>
+      <a href="https://www.eksworkshop.com/" target="_blank" class="hidden md:flex items-center gap-1.5 text-xs text-slate-400 hover:text-amber-400 transition-colors px-3 py-1.5 rounded-lg border border-slate-800 hover:border-slate-700 bg-slate-900">
+        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+        <span>原版英文站</span>
+      </a>
+      <button onclick="window.print()" class="text-xs bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold px-3 py-1.5 rounded-lg transition-all shadow-md flex items-center gap-1.5">
+        <i class="fa-solid fa-print"></i>
+        <span class="hidden sm:inline">导出离线手册</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="flex-1 flex max-w-[1920px] w-full mx-auto">
+    <!-- 左侧侧边栏导航 -->
+    <aside id="sidebar" class="fixed lg:sticky top-16 z-40 w-72 h-[calc(100vh-4rem)] bg-slate-900/95 lg:bg-slate-950 border-r border-slate-800 flex flex-col p-4 overflow-y-auto transition-transform duration-300 -translate-x-full lg:translate-x-0">
+      <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 px-2 flex items-center justify-between">
+        <span>全模块课程目录</span>
+        <span class="text-[10px] bg-slate-800 px-1.5 py-0.5 rounded text-amber-400 font-mono">9 大专题</span>
+      </div>
+      <nav class="space-y-1 text-sm font-medium" id="sidebarNav">
+        <a href="#mod-intro" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors">
+          <i class="fa-solid fa-compass w-4 text-center text-amber-400"></i>
+          <span>01. 简介与环境架构</span>
+        </a>
+        <a href="#mod-fundamentals" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors">
+          <i class="fa-solid fa-cubes w-4 text-center text-blue-400"></i>
+          <span>02. 计算与存储核心底座</span>
+        </a>
+        <a href="#mod-autoscaling" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors">
+          <i class="fa-solid fa-bolt w-4 text-center text-amber-500"></i>
+          <span>03. Karpenter 下一代弹性伸缩</span>
+        </a>
+        <a href="#mod-networking" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors">
+          <i class="fa-solid fa-network-wired w-4 text-center text-emerald-400"></i>
+          <span>04. VPC CNI 与负载均衡网关</span>
+        </a>
+        <a href="#mod-security" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors">
+          <i class="fa-solid fa-shield-halved w-4 text-center text-rose-400"></i>
+          <span>05. 企业级安全、权限与秘钥</span>
+        </a>
+        <a href="#mod-observability" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors">
+          <i class="fa-solid fa-chart-line w-4 text-center text-cyan-400"></i>
+          <span>06. 全景可观测性与成本治理</span>
+        </a>
+        <a href="#mod-automation" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors">
+          <i class="fa-solid fa-code-merge w-4 text-center text-purple-400"></i>
+          <span>07. 自动化流水线与 GitOps</span>
+        </a>
+        <a href="#mod-aiml" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors">
+          <i class="fa-solid fa-brain w-4 text-center text-fuchsia-400"></i>
+          <span>08. AI / ML 与大模型训推加速</span>
+        </a>
+        <a href="#mod-troubleshooting" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors">
+          <i class="fa-solid fa-stethoscope w-4 text-center text-red-400"></i>
+          <span>09. 官方实战故障排查全集</span>
+        </a>
+      </nav>
+
+      <div class="mt-auto pt-4 border-t border-slate-800 text-xs text-slate-500 space-y-1">
+        <p>基于 AWS 官方开源版本打造</p>
+        <p class="font-mono text-[11px] text-slate-600">v2.x Modular Edition</p>
+      </div>
+    </aside>
+
+    <!-- 右侧主体内容容器 -->
+    <main class="flex-1 min-w-0 p-4 sm:p-6 lg:p-10 max-w-5xl mx-auto space-y-16">
+
+      <!-- 导言横幅 -->
+      <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-slate-700/60 rounded-2xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+        <div class="absolute right-0 top-0 translate-x-10 -translate-y-10 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="relative z-10 space-y-4">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-semibold">
+            <i class="fa-solid fa-award"></i> AWS 官方精品中文技术文档
+          </div>
+          <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+            Amazon EKS Workshop 全景实战技术指南
+          </h1>
+          <p class="text-slate-300 text-sm sm:text-base leading-relaxed max-w-3xl">
+            本指南将 AWS 官方 EKS Workshop (<a href="https://www.eksworkshop.com/" target="_blank" class="text-amber-400 underline hover:text-amber-300">eksworkshop.com</a>) 的所有核心实战实验与知识图谱进行结构化沉淀与精品汉化。涵盖企业级云原生基础设施设计、生产故障排查、下一代自动伸缩与云原生 AI 落地。
+          </p>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2 text-xs">
+            <div class="bg-slate-950/60 p-3 rounded-lg border border-slate-800">
+              <span class="text-slate-400 block mb-1">覆盖模块</span>
+              <span class="text-amber-400 font-bold text-base">9 大专题</span>
+            </div>
+            <div class="bg-slate-950/60 p-3 rounded-lg border border-slate-800">
+              <span class="text-slate-400 block mb-1">实战实验</span>
+              <span class="text-emerald-400 font-bold text-base">40+ Labs</span>
+            </div>
+            <div class="bg-slate-950/60 p-3 rounded-lg border border-slate-800">
+              <span class="text-slate-400 block mb-1">企业排障</span>
+              <span class="text-rose-400 font-bold text-base">全真场景</span>
+            </div>
+            <div class="bg-slate-950/60 p-3 rounded-lg border border-slate-800">
+              <span class="text-slate-400 block mb-1">最新特性</span>
+              <span class="text-blue-400 font-bold text-base">Karpenter / Pod ID</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- 模块 01: 简介与准备 -->
+      <!-- ========================================== -->
+      <section id="mod-intro" class="section-card space-y-6 scroll-mt-20">
+        <div class="flex items-center gap-3 border-b border-slate-800 pb-4">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center font-bold text-lg">01</div>
+          <div>
+            <h2 class="text-2xl font-bold text-white">简介与环境架构 (Introduction & Sample Application)</h2>
+            <p class="text-xs text-slate-400">了解 EKS Workshop 的体系结构，以及官方贯穿全篇的“零售商店”微服务参考架构。</p>
+          </div>
+        </div>
+
+        <div class="prose prose-invert max-w-none text-sm text-slate-300 space-y-4 leading-relaxed">
+          <p>
+            Amazon Elastic Kubernetes Service (Amazon EKS) 是一项完全托管的 Kubernetes 服务。官方工作坊围绕真实业务场景设计，核心参考微服务为 <strong>Retail Store Sample App (零售在线商城)</strong>。
+          </p>
+
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3">
+            <h4 class="font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-sitemap text-amber-400"></i> Retail Store 微服务组件拆解
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              <div class="bg-slate-950 p-3.5 rounded-lg border border-slate-800 space-y-1">
+                <span class="font-bold text-amber-300">UI 服务 (ui)</span>
+                <p class="text-slate-400">前端用户界面，基于 Vue/Nginx 交付静态资产，负责与所有后端 API 路由交互。</p>
+              </div>
+              <div class="bg-slate-950 p-3.5 rounded-lg border border-slate-800 space-y-1">
+                <span class="font-bold text-blue-300">商品目录服务 (catalog)</span>
+                <p class="text-slate-400">Golang 编写的高性能目录查询服务，后端使用 MySQL 数据库持久化存储商品清单。</p>
+              </div>
+              <div class="bg-slate-950 p-3.5 rounded-lg border border-slate-800 space-y-1">
+                <span class="font-bold text-emerald-300">购物车服务 (carts)</span>
+                <p class="text-slate-400">Java/Spring Boot 框架构建，使用 DynamoDB 或 Redis 存储用户的动态购物车会话。</p>
+              </div>
+              <div class="bg-slate-950 p-3.5 rounded-lg border border-slate-800 space-y-1">
+                <span class="font-bold text-purple-300">结账服务 (checkout)</span>
+                <p class="text-slate-400">Node.js 构建的核心支付与结账网关，处理订单生成，是滚动更新实验的核心对象。</p>
+              </div>
+              <div class="bg-slate-950 p-3.5 rounded-lg border border-slate-800 space-y-1">
+                <span class="font-bold text-rose-300">订单服务 (orders)</span>
+                <p class="text-slate-400">处理已提交订单流水，通过消息队列或写入 RDS/PostgreSQL 进行持久化留存。</p>
+              </div>
+              <div class="bg-slate-950 p-3.5 rounded-lg border border-slate-800 space-y-1">
+                <span class="font-bold text-cyan-300">静态资产服务 (assets)</span>
+                <p class="text-slate-400">托管商品高清图片与多媒体内容，常作为 S3 Mountpoint 或 EBS 存储实训载体。</p>
+              </div>
+            </div>
+          </div>
+
+          <h3 class="text-lg font-bold text-white pt-2">快速部署官方微服务应用</h3>
+          <p>在 EKS 集群中使用 Kustomize 声明式部署全套示例微服务：</p>
+          <div class="relative group">
+            <pre class="bg-slate-900 border border-slate-800 p-4 rounded-xl text-xs font-mono text-emerald-400 overflow-x-auto"><code># 查看并一键应用零售商店的微服务清单
+kubectl apply -k https://github.com/aws-samples/eks-workshop-v2/manifests/apps/retail-store/sample-acc/?ref=main
+
+# 检查所有微服务 Pod 的启动就绪状态
+kubectl get pods -n retail -o wide</code></pre>
+            <button onclick="copyCode(this)" class="absolute right-3 top-3 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded border border-slate-700">复制</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 模块 02: 核心计算与存储基础 -->
+      <!-- ========================================== -->
+      <section id="mod-fundamentals" class="section-card space-y-6 scroll-mt-20">
+        <div class="flex items-center gap-3 border-b border-slate-800 pb-4">
+          <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center font-bold text-lg">02</div>
+          <div>
+            <h2 class="text-2xl font-bold text-white">计算与存储核心底座 (Fundamentals: Compute & Storage)</h2>
+            <p class="text-xs text-slate-400">托管节点组 (MNG)、Fargate 无服务器、EBS/EFS CSI 持久化存储与平滑版本升级。</p>
+          </div>
+        </div>
+
+        <div class="space-y-5 text-sm text-slate-300 leading-relaxed">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl space-y-2">
+              <h4 class="font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-server text-blue-400"></i> 托管节点组 (Managed Node Groups)
+              </h4>
+              <p class="text-xs text-slate-400">
+                AWS 自动化托管 EC2 节点的配置、伸缩与补丁。节点升级时自动执行 <code>Drain</code>（排空）确保业务零感知，并自动配置标准优化 AMI 与 kubelet 参数。
+              </p>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl space-y-2">
+              <h4 class="font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-cloud text-cyan-400"></i> AWS Fargate 无服务器计算
+              </h4>
+              <p class="text-xs text-slate-400">
+                无需管理任何 EC2 虚拟机。每个 Pod 独享专属微虚拟机（MicroVM），基于内核级别强隔离，按 Pod 申请的 vCPU 和内存精确计费。
+              </p>
+            </div>
+          </div>
+
+          <h3 class="text-lg font-bold text-white pt-2">EKS 三大持久化存储方案实战</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border border-slate-800 rounded-lg overflow-hidden">
+              <thead class="bg-slate-900 text-slate-300 border-b border-slate-800">
+                <tr>
+                  <th class="p-3">存储类型</th>
+                  <th class="p-3">AWS 驱动 (CSI)</th>
+                  <th class="p-3">访问模式 (AccessMode)</th>
+                  <th class="p-3">典型适用场景</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-800/60 bg-slate-950">
+                <tr>
+                  <td class="p-3 font-semibold text-amber-400">Amazon EBS</td>
+                  <td class="p-3 font-mono">ebs.csi.aws.com</td>
+                  <td class="p-3">ReadWriteOnce (单节点独占)</td>
+                  <td class="p-3 text-slate-400">MySQL、Postgres、Redis 等低延迟关系数据库与高 IOPS 负载</td>
+                </tr>
+                <tr>
+                  <td class="p-3 font-semibold text-blue-400">Amazon EFS</td>
+                  <td class="p-3 font-mono">efs.csi.aws.com</td>
+                  <td class="p-3">ReadWriteMany (多节点并发读写)</td>
+                  <td class="p-3 text-slate-400">WordPress、代码共享库、机器学习共享训练数据集、多副本内容管理</td>
+                </tr>
+                <tr>
+                  <td class="p-3 font-semibold text-emerald-400">Mountpoint for S3</td>
+                  <td class="p-3 font-mono">s3.csi.aws.com</td>
+                  <td class="p-3">ReadOnly / Append-Only</td>
+                  <td class="p-3 text-slate-400">海量 PB 级训练数据、模型权重加载、分析作业日志归档</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+            <div class="text-xs font-bold text-slate-200 mb-2">EBS 动态分配 StorageClass 典型配置 (gp3)：</div>
+            <pre class="bg-black/60 p-3 rounded-lg text-xs font-mono text-amber-300 overflow-x-auto"><code>apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ebs-gp3-sc
+provisioner: ebs.csi.aws.com
+volumeBindingMode: WaitForFirstConsumer # 关键：等待 Pod 调度确定可用区后再创建 EBS
+parameters:
+  type: gp3
+  iops: "3000"
+  throughput: "125"</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 模块 03: Karpenter 下一代弹性伸缩 -->
+      <!-- ========================================== -->
+      <section id="mod-autoscaling" class="section-card space-y-6 scroll-mt-20">
+        <div class="flex items-center gap-3 border-b border-slate-800 pb-4">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20 flex items-center justify-center font-bold text-lg">03</div>
+          <div>
+            <h2 class="text-2xl font-bold text-white">Karpenter 下一代极速弹性伸缩 (Karpenter Autoscaling)</h2>
+            <p class="text-xs text-slate-400">告别传统 Cluster Autoscaler 节点组限制，秒级直调 EC2 Fleet，极致节省算力成本。</p>
+          </div>
+        </div>
+
+        <div class="space-y-4 text-sm text-slate-300 leading-relaxed">
+          <p>
+            传统 <strong>Cluster Autoscaler (CAS)</strong> 依赖 AWS Auto Scaling Groups (ASG)，伸缩速度慢（通常需要 3~5 分钟）、机型配置僵硬。而 <strong>Karpenter</strong> 直接绕过 ASG，直接监听 API Server 中处于 <code>Pending</code> 状态的 Pod，直接算出最经济的机型并在 <strong>45 秒内</strong> 完成扩容！
+          </p>
+
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3">
+            <h4 class="font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-code text-amber-400"></i> Karpenter v1 (NodePool + EC2NodeClass) 标准定义
+            </h4>
+            <pre class="bg-black/60 p-4 rounded-lg text-xs font-mono text-emerald-400 overflow-x-auto"><code>apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: default
+spec:
+  template:
+    spec:
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: default
+      requirements:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["spot", "on-demand"] # 优先使用高性价比 Spot 竞价实例
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["amd64", "arm64"]     # 支持 Graviton ARM 架构
+        - key: karpenter.k8s.aws/instance-category
+          operator: In
+          values: ["c", "m", "r"]
+  disruption:
+    consolidationPolicy: WhenEmptyOrUnderutilized # 自动缩容整合：当集群碎片化时自动换用更小更便宜的机器
+    consolidateAfter: 1m</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 模块 04: VPC CNI 与负载均衡网关 -->
+      <!-- ========================================== -->
+      <section id="mod-networking" class="section-card space-y-6 scroll-mt-20">
+        <div class="flex items-center gap-3 border-b border-slate-800 pb-4">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center font-bold text-lg">04</div>
+          <div>
+            <h2 class="text-2xl font-bold text-white">VPC CNI 与应用网关 (Networking: VPC CNI & Ingress)</h2>
+            <p class="text-xs text-slate-400">原生 VPC 容器网络、前缀委托、Pod 独立安全组与 AWS Load Balancer Controller。</p>
+          </div>
+        </div>
+
+        <div class="space-y-4 text-sm text-slate-300 leading-relaxed">
+          <p>
+            不同于大多数 K8s 使用的 Overlay 覆盖网络（如 Flannel/Calico VXLAN），EKS 默认采用 <strong>Amazon VPC CNI</strong>。每个 Pod 都直接获取一个真实的 AWS VPC 内网 IP，享受原生 VPC 路由性能与全套网络安全能力。
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-1.5">
+              <span class="font-bold text-emerald-400">前缀委托 (Prefix Delegation)</span>
+              <p class="text-slate-400">分配 <code>/28</code> IP 前缀给网卡，大幅提升单节点 Pod 密度（不再受限于 EC2 辅助 IP 配额）。</p>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-1.5">
+              <span class="font-bold text-teal-400">自定义网络 (Custom Networking)</span>
+              <p class="text-slate-400">将 Pod 置于单独的私有子网/网段，宿主机节点位于另一子网，解决主 VPC IP 耗尽问题。</p>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-1.5">
+              <span class="font-bold text-cyan-400">Pod 级安全组 (SGP)</span>
+              <p class="text-slate-400">通过 <code>SecurityGroupPolicy</code> CRD 将 AWS 安全组直接挂到单个 Pod，实现真正的细粒度防火墙。</p>
+            </div>
+          </div>
+
+          <h3 class="text-lg font-bold text-white pt-2">AWS Load Balancer Controller 流量分发</h3>
+          <p>通过官方控制器无缝接管外部流量：</p>
+          <ul class="list-disc pl-5 space-y-1 text-xs text-slate-400">
+            <li><strong>ALB (Application Load Balancer)</strong>：声明 <code>Ingress</code> 资源，支持七层路径路由、Host 路由、自动申请 ACM 免费证书与 HTTP/2。</li>
+            <li><strong>NLB (Network Load Balancer)</strong>：声明 <code>type: LoadBalancer</code> 的 Service，支持四层超大并发、静态 EIP 绑定与客户端真实 IP 透传。</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 模块 05: 企业级安全、权限与秘钥 -->
+      <!-- ========================================== -->
+      <section id="mod-security" class="section-card space-y-6 scroll-mt-20">
+        <div class="flex items-center gap-3 border-b border-slate-800 pb-4">
+          <div class="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center font-bold text-lg">05</div>
+          <div>
+            <h2 class="text-2xl font-bold text-white">企业级安全、权限与秘钥 (Security & Identity)</h2>
+            <p class="text-xs text-slate-400">新一代 EKS Pod Identity、IRSA 最小权限、Access Entries 与 Secrets Manager 外部密钥注入。</p>
+          </div>
+        </div>
+
+        <div class="space-y-4 text-sm text-slate-300 leading-relaxed">
+          <h3 class="text-base font-bold text-white">身份认证的重大演进：Pod Identity vs IRSA</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-rose-400">新一代：EKS Pod Identity (推荐)</span>
+                <span class="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[10px]">最新标准</span>
+              </div>
+              <p class="text-slate-400">
+                不再需要为每个集群配置 OIDC 身份提供商（IdP）。直接使用 EKS Pod Identity Agent DaemonSet，在 AWS 控制台或 CLI 将 IAM 角色绑定到服务账户，支持跨账号与标签会话策略。
+              </p>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-amber-400">经典方案：IRSA</span>
+                <span class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 text-[10px]">长期支持</span>
+              </div>
+              <p class="text-slate-400">
+                基于 OpenID Connect (OIDC) 联合身份认证。Pod 挂载投射卷（Projected Token），AWS SDK 自动使用该 Token 调用 <code>sts:AssumeRoleWithWebIdentity</code> 换取临时凭据。
+              </p>
+            </div>
+          </div>
+
+          <h3 class="text-base font-bold text-white pt-2">集群访问控制：告别 aws-auth，拥抱 Access Entries</h3>
+          <p>
+            过去 EKS 依赖 <code>kube-system/aws-auth</code> ConfigMap，极易由于误修改语法导致整个集群所有管理员被锁在门外！
+            现在，EKS 原生提供 <strong>Access Entries API</strong>，在 IAM 层面直接将 IAM 角色绑定到集群内置的访问策略（如 <code>AmazonEKSClusterAdminPolicy</code>、<code>AmazonEKSAdminPolicy</code>），并支持限制在指定 Namespace 范围内。
+          </p>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 模块 06: 全景可观测性与成本治理 -->
+      <!-- ========================================== -->
+      <section id="mod-observability" class="section-card space-y-6 scroll-mt-20">
+        <div class="flex items-center gap-3 border-b border-slate-800 pb-4">
+          <div class="w-10 h-10 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center font-bold text-lg">06</div>
+          <div>
+            <h2 class="text-2xl font-bold text-white">全景可观测性与成本治理 (Observability & Kubecost)</h2>
+            <p class="text-xs text-slate-400">指标体系 (AMP/AMG)、Fluent Bit 日志汇聚、Container Insights 与细粒度成本核算。</p>
+          </div>
+        </div>
+
+        <div class="space-y-4 text-sm text-slate-300 leading-relaxed">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-2">
+              <span class="font-bold text-cyan-400">AWS 托管 Prometheus (AMP)</span>
+              <p class="text-slate-400">完全托管的高可用时序数据库，免维护自建 Prometheus 的持久化盘与分片扩容烦恼。</p>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-2">
+              <span class="font-bold text-blue-400">AWS 托管 Grafana (AMG)</span>
+              <p class="text-slate-400">开箱即用的企业级可视化看板，原生集成 IAM SSO 登录与 CloudWatch、AMP 数据源。</p>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-2">
+              <span class="font-bold text-amber-400">Kubecost 成本优化</span>
+              <p class="text-slate-400">精确核算到每个 Namespace、Deployment、Pod 甚至 Label 的美元花销，提供资源超配削峰建议。</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 模块 07: 自动化流水线与 GitOps -->
+      <!-- ========================================== -->
+      <section id="mod-automation" class="section-card space-y-6 scroll-mt-20">
+        <div class="flex items-center gap-3 border-b border-slate-800 pb-4">
+          <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center font-bold text-lg">07</div>
+          <div>
+            <h2 class="text-2xl font-bold text-white">自动化流水线与 GitOps (Automation & GitOps)</h2>
+            <p class="text-xs text-slate-400">以 Git 为单一可信源的声明式交付（ArgoCD / Flux），与 ACK 云资源声明式托管。</p>
+          </div>
+        </div>
+
+        <div class="space-y-4 text-sm text-slate-300 leading-relaxed">
+          <p>
+            通过 <strong>ArgoCD</strong> 部署 GitOps 体系：业务研发只需向 Git 提交代码合并请求（PR），ArgoCD 自动对比集群当前状态与 Git 仓库的预期状态，完成自动同步与渐进式金丝雀发布。
+          </p>
+          <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+            <span class="text-xs font-bold text-purple-300 block mb-2">ACK (AWS Controllers for Kubernetes)：</span>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              允许您在 Kubernetes 集群内像创建 Pod 一样，用 YAML 声明管理外部 AWS 云资源（例如直接定义一个 <code>RDSInstance</code> 或 <code>S3Bucket</code>），极大统一多云与混合基础设施管理体验。
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 模块 08: AI / ML 与大模型训推加速 -->
+      <!-- ========================================== -->
+      <section id="mod-aiml" class="section-card space-y-6 scroll-mt-20">
+        <div class="flex items-center gap-3 border-b border-slate-800 pb-4">
+          <div class="w-10 h-10 rounded-xl bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/20 flex items-center justify-center font-bold text-lg">08</div>
+          <div>
+            <h2 class="text-2xl font-bold text-white">AI / ML 与大模型训推 (AI/ML on EKS)</h2>
+            <p class="text-xs text-slate-400">基于 vLLM / Mistral 的大模型容器化部署、AWS Inferentia2 加速芯片与 Ray 分布式算力。</p>
+          </div>
+        </div>
+
+        <div class="space-y-4 text-sm text-slate-300 leading-relaxed">
+          <p>
+            EKS 是运行生成式 AI (Generative AI) 与大规模深度学习训练的最佳底座。
+          </p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-2">
+              <span class="font-bold text-fuchsia-400">vLLM + 大模型 Chatbot 实战</span>
+              <p class="text-slate-400">使用 vLLM 高并发推理引擎，在 EKS 上部署开源 Mistral 7B 模型，实现 PagedAttention 显存优化与流式返回。</p>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-2">
+              <span class="font-bold text-pink-400">AWS Inferentia / Trainium 加速芯片</span>
+              <p class="text-slate-400">通过 AWS Neuron SDK 设备插件，在 <code>inf2.xlarge</code> 实例上运行深度学习推理，单位吞吐推理成本较传统通用 GPU 降低高达 50%。</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 模块 09: 官方实战故障排查全集 (重点复盘) -->
+      <!-- ========================================== -->
+      <section id="mod-troubleshooting" class="section-card space-y-6 scroll-mt-20">
+        <div class="flex items-center gap-3 border-b border-slate-800 pb-4">
+          <div class="w-10 h-10 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 flex items-center justify-center font-bold text-lg">09</div>
+          <div>
+            <h2 class="text-2xl font-bold text-white">官方实战故障排查全集 (Troubleshooting Masterclass)</h2>
+            <p class="text-xs text-slate-400">全网最系统 EKS 疑难杂症：CoreDNS 丢包、ALB 502/504、Pod 探针死锁与节点 NotReady。</p>
+          </div>
+        </div>
+
+        <div class="space-y-6 text-sm text-slate-300 leading-relaxed">
+          <!-- 故障 1 -->
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-amber-400 flex items-center gap-2">
+                <i class="fa-solid fa-bug"></i> 场景一：Service Selector 漂移导致 503 Service Unavailable (EKS-01 真题)
+              </h3>
+              <span class="text-xs px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/30">生产高发</span>
+            </div>
+            <p class="text-xs text-slate-400">
+              <strong>故障表象</strong>：Pod 处于正常的 <code>1/1 Running</code>，业务进程没有任何报错，但外部或集群内访问 Service 的 ClusterIP 恒报 503 或 Connection Refused。
+            </p>
+            <div class="bg-black/60 p-3 rounded-lg text-xs font-mono space-y-1">
+              <div class="text-slate-400"># 诊断步骤 1：检查 Endpoints 或 EndpointSlices</div>
+              <div class="text-emerald-400">kubectl get endpoints &lt;service-name&gt; -n &lt;namespace&gt;</div>
+              <div class="text-rose-400">&gt;&gt; 输出发现 ENDPOINTS 为 &lt;none&gt;！说明 Service 未能匹配到任何后端实例。</div>
+              <div class="text-slate-400"># 诊断步骤 2：比对 Service Selector 与 Pod 实际 Labels</div>
+              <div class="text-emerald-400">kubectl get svc &lt;service-name&gt; -o jsonpath='{.spec.selector}'</div>
+              <div class="text-emerald-400">kubectl get pods --show-labels</div>
+            </div>
+            <p class="text-xs text-slate-400">
+              <strong>修复方法</strong>：统一 Selector 与 Pod Label。执行 <code>kubectl patch service &lt;name&gt; -p '{"spec":{"selector":{"app":"&lt;correct-label&gt;"}}}'</code>。
+            </p>
+          </div>
+
+          <!-- 故障 2 -->
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-indigo-400 flex items-center gap-2">
+                <i class="fa-solid fa-arrows-spin"></i> 场景二：就绪探针 (Readiness Probe) 404 导致滚动更新卡死 (EKS-02 真题)
+              </h3>
+              <span class="text-xs px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/30">发布门禁</span>
+            </div>
+            <p class="text-xs text-slate-400">
+              <strong>故障表象</strong>：执行版本发布后，新的 ReplicaSet 已创建，新 Pod 永远处于 <code>0/1 Running</code>，10 分钟后 Deployment 报 <code>ProgressDeadlineExceeded</code> 超时。
+            </p>
+            <div class="bg-black/60 p-3 rounded-lg text-xs font-mono space-y-1">
+              <div class="text-slate-400"># 诊断步骤：提取 Pod 最新 Events</div>
+              <div class="text-emerald-400">kubectl describe pod &lt;new-pod-name&gt;</div>
+              <div class="text-rose-400">&gt;&gt; Warning Unhealthy: Readiness probe failed: HTTP probe failed with statuscode: 404</div>
+            </div>
+            <p class="text-xs text-slate-400">
+              <strong>核心原理</strong>：Kubelet 探针未得到 200~399 成功响应，标记 Pod 为 <code>Ready: False</code>。K8s 滚动发布流量保护机制生效，禁止销毁旧版本副本，导致发布流程挂起。
+            </p>
+          </div>
+
+          <!-- 故障 3 -->
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3">
+            <h3 class="font-bold text-cyan-400 flex items-center gap-2">
+              <i class="fa-solid fa-globe"></i> 场景三：CoreDNS 解析超时与延迟膨胀
+            </h3>
+            <p class="text-xs text-slate-400">
+              <strong>故障表象</strong>：Pod 频繁偶发解析外部域名超时（5 秒延迟）。
+            </p>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              <strong>根因剖析</strong>：Linux 默认的 <code>ndots:5</code> 设置导致应用每次解析域名时，会依次补全 <code>.retail.svc.cluster.local</code>、<code>.svc.cluster.local</code>、<code>.cluster.local</code> 进行多次无意义内部查询，打爆 CoreDNS。
+              <strong>最佳解法</strong>：部署 <strong>NodeLocal DNSCache</strong>，或在 Pod 中设置 <code>dnsConfig.options: [{name: "ndots", value: "2"}]</code>。
+            </p>
+          </div>
+
+          <!-- 故障 4 -->
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3">
+            <h3 class="font-bold text-rose-400 flex items-center gap-2">
+              <i class="fa-solid fa-triangle-exclamation"></i> 场景四：ALB Ingress 报 502 Bad Gateway / 未关联 TargetGroup
+            </h3>
+            <p class="text-xs text-slate-400">
+              <strong>根因排查三板斧</strong>：
+            </p>
+            <ol class="list-decimal pl-5 text-xs text-slate-400 space-y-1">
+              <li><strong>子网标签缺失</strong>：公网 ALB 所属子网必须打上标签 <code>kubernetes.io/role/elb = 1</code>，私网打 <code>kubernetes.io/role/internal-elb = 1</code>。</li>
+              <li><strong>安全组未放通</strong>：Worker Node 节点安全组必须允许来自 ALB 安全组的入站流量。</li>
+              <li><strong>模式不匹配</strong>：Pod 若使用 VPC CNI，推荐使用 <code>alb.ingress.kubernetes.io/target-type: ip</code> 直连 Pod，避免经过 NodePort 二次转发。</li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- 网页底部 -->
+  <footer class="border-t border-slate-800 py-8 bg-slate-950 text-center text-xs text-slate-500">
+    <div class="max-w-5xl mx-auto px-4 space-y-2">
+      <p>Amazon EKS 官方实战工作坊 (EKS Workshop) 权威全景中文指南 · 本地精品收藏版</p>
+      <p>基于官方开源库 <a href="https://github.com/aws-samples/eks-workshop-v2" class="text-slate-400 hover:text-amber-400 underline">aws-samples/eks-workshop-v2</a> 编译汉化 · 支持离线双击打开</p>
+    </div>
+  </footer>
+
+  <script>
+    function copyCode(btn) {
+      const code = btn.parentElement.querySelector('code').innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        const orig = btn.innerText;
+        btn.innerText = '已复制!';
+        btn.classList.add('bg-amber-500', 'text-slate-950');
+        setTimeout(() => {
+          btn.innerText = orig;
+          btn.classList.remove('bg-amber-500', 'text-slate-950');
+        }, 2000);
+      });
+    }
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      sidebar.classList.toggle('-translate-x-full');
+    }
+
+    function filterContent() {
+      const query = document.getElementById('searchInput').value.toLowerCase().trim();
+      const sections = document.querySelectorAll('.section-card');
+      
+      sections.forEach(sec => {
+        const text = sec.innerText.toLowerCase();
+        if (query === '' || text.includes(query)) {
+          sec.style.display = 'block';
+        } else {
+          sec.style.display = 'none';
+        }
+      });
+    }
+  </script>
+</body>
+</html>
